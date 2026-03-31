@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Python Tutor</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+<h1>🎓 My Python Tutor</h1>
+<button class="assignment-btn" id="assignment-title" onclick="getNewTask()">↻ Generate New Task</button>
+</header>
+<div class="main-container">
+<div class="code-panel">
+<h2>📝 Your Code</h2>
+<div class="task-box" id="task-desc">
+Loading your first AI-generated task...
+</div>
+<textarea id="code-editor" spellcheck="false">
+# Waking up the AI...
+</textarea>
+<button class="run-btn">▶ Run Code</button>
+</div>
+<div class="chat-panel">
+<h2>💬 AI Tutor Assistant</h2>
+<div class="chat-container">
+<div id="messages"></div>
+<div class="input-area">
+<input type="text" id="user-input" placeholder="Ask the tutor a question...">
+<button onclick="sendMessage()" class="send-btn">Send</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+// --- NEW CODE: Fetches a random task from the AI ---
+async function getNewTask() {
+    const titleBtn = document.getElementById("assignment-title");
+    const descBox = document.getElementById("task-desc");
+    const editor = document.getElementById("code-editor");
+
+    // Show loading state
+    titleBtn.innerText = "↻ Asking AI for a task...";
+    descBox.innerText = "Generating a new Python challenge...";
+    editor.value = "# Waiting for AI...";
+
+    try {
+        const response = await fetch("/generate_task");
+        const data = await response.json();
+
+        // Populate the UI with the AI's response
+        titleBtn.innerText = "↻ " + data.title + " (Click for new)";
+        descBox.innerHTML = "<b>Task:</b> " + data.task;
+        editor.value = data.starter_code;
+    } catch (error) {
+        descBox.innerText = "Failed to load task. Please try again.";
+    }
+}
+
+// Automatically get a task when you open the page
+window.onload = getNewTask;
+
+// --- EXISTING CODE: Chatting with the Tutor ---
+async function sendMessage() {
+    const inputField = document.getElementById("user-input");
+    const message = inputField.value;
+    if (!message) return;
+
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML += `<div class="user-msg">${message}</div>`;
+    inputField.value = "";
+
+    const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+    });
+
+    const data = await response.json();
+    messagesDiv.innerHTML += `<div class="bot-msg">${data.response}</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+</script>
+</body>
+</html>
