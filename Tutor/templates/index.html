@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Python Tutor</title>
 <link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 </head>
 <body>
 <header>
@@ -18,7 +19,11 @@
 Loading your first AI-generated task...
 </div>
 <textarea id="code-editor" spellcheck="false"></textarea>
-<button class="run-btn">▶ Run Code</button>
+<div class="terminal-container">
+<div class="terminal-header">Terminal Output</div>
+<div id="output-terminal">Downloading Python engine... please wait.</div>
+</div>
+<button class="run-btn" onclick="executePython()">▶ Run Code</button>
 </div>
 <div class="chat-panel">
 <h2>💬 AI Tutor Assistant</h2>
@@ -32,14 +37,52 @@ Loading your first AI-generated task...
 </div>
 </div>
 <script>
+let pyodideReadyPromise = loadPyodide({
+    stdout: (text) => {
+        const terminal = document.getElementById("output-terminal");
+        terminal.innerText += text + "\n";
+        terminal.scrollTop = terminal.scrollHeight;
+    },
+    stderr: (text) => {
+        const terminal = document.getElementById("output-terminal");
+        terminal.innerText += "Error: " + text + "\n";
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+}).then(pyodide => {
+    document.getElementById("output-terminal").innerText = "Python ready!\n";
+    return pyodide;
+});
+
+async function executePython() {
+    const code = document.getElementById("code-editor").value;
+    const terminal = document.getElementById("output-terminal");
+    const runBtn = document.querySelector(".run-btn");
+    
+    terminal.innerText = "";
+    runBtn.innerText = "⏳ Running...";
+    runBtn.disabled = true;
+
+    try {
+        let pyodide = await pyodideReadyPromise;
+        await pyodide.runPythonAsync(code);
+    } catch (err) {
+        terminal.innerText += err.message + "\n";
+    } finally {
+        runBtn.innerText = "▶ Run Code";
+        runBtn.disabled = false;
+    }
+}
+
 async function getNewTask() {
     const titleBtn = document.getElementById("assignment-title");
     const descBox = document.getElementById("task-desc");
     const editor = document.getElementById("code-editor");
+    const terminal = document.getElementById("output-terminal");
 
     titleBtn.innerText = "↻ Asking AI for a task...";
     descBox.innerText = "Generating a new Python challenge...";
     editor.value = "";
+    terminal.innerText = "Python ready!\n";
 
     try {
         const response = await fetch("/generate_task");
@@ -61,7 +104,9 @@ async function sendMessage() {
     if (!message) return;
     
     const editorContent = document.getElementById("code-editor").value;
-    const combinedMessage = `User asks: '${message}'\n\nCurrent Code in Editor:\n${editorContent}`;
+    const terminalContent = document.getElementById("output-terminal").innerText;
+    
+    const combinedMessage = `User asks: '${message}'\n\nCurrent Code in Editor:\n${editorContent}\n\nCurrent Terminal Output:\n${terminalContent}`;
     
     const messagesDiv = document.getElementById("messages");
     messagesDiv.innerHTML += `<div class="user-msg">${message}</div>`;
