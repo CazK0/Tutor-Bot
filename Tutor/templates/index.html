@@ -10,7 +10,15 @@
 <body>
 <header>
 <h1>🎓 My Python Tutor</h1>
+<div class="controls-container">
+<select id="mode-selector">
+<option value="standard">Standard Practice</option>
+<option value="leetcode">Interview Prep (LeetCode)</option>
+<option value="project">Project Builder</option>
+<option value="bug">Bug Fixer</option>
+</select>
 <button class="assignment-btn" id="assignment-title" onclick="getNewTask()">↻ Generate New Task</button>
+</div>
 </header>
 <div class="main-container">
 <div class="code-panel">
@@ -57,7 +65,7 @@ async function executePython() {
     const code = document.getElementById("code-editor").value;
     const terminal = document.getElementById("output-terminal");
     const runBtn = document.querySelector(".run-btn");
-    
+
     terminal.innerText = "";
     runBtn.innerText = "⏳ Running...";
     runBtn.disabled = true;
@@ -78,17 +86,18 @@ async function getNewTask() {
     const descBox = document.getElementById("task-desc");
     const editor = document.getElementById("code-editor");
     const terminal = document.getElementById("output-terminal");
+    const mode = document.getElementById("mode-selector").value;
 
-    titleBtn.innerText = "↻ Asking AI for a task...";
+    titleBtn.innerText = "↻ Asking AI...";
     descBox.innerText = "Generating a new Python challenge...";
     editor.value = "";
     terminal.innerText = "Python ready!\n";
 
     try {
-        const response = await fetch("/generate_task");
+        const response = await fetch(`/generate_task?mode=${mode}`);
         const data = await response.json();
-        
-        titleBtn.innerText = "↻ " + data.title + " (Click for new)";
+
+        titleBtn.innerText = "↻ " + data.title;
         descBox.innerHTML = "<b>Task:</b> " + data.task;
         editor.value = data.starter_code;
     } catch (error) {
@@ -102,22 +111,22 @@ async function sendMessage() {
     const inputField = document.getElementById("user-input");
     const message = inputField.value;
     if (!message) return;
-    
+
     const editorContent = document.getElementById("code-editor").value;
     const terminalContent = document.getElementById("output-terminal").innerText;
-    
-    const combinedMessage = `User asks: '${message}'\n\nCurrent Code in Editor:\n${editorContent}\n\nCurrent Terminal Output:\n${terminalContent}`;
-    
+
+    const combinedMessage = `User asks: '${message}'\n\nCurrent Code:\n${editorContent}\n\nTerminal:\n${terminalContent}`;
+
     const messagesDiv = document.getElementById("messages");
     messagesDiv.innerHTML += `<div class="user-msg">${message}</div>`;
     inputField.value = "";
-    
+
     const response = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: combinedMessage })
     });
-    
+
     const data = await response.json();
     messagesDiv.innerHTML += `<div class="bot-msg">${data.response}</div>`;
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
