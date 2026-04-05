@@ -24,6 +24,21 @@ header h1 {
     margin: 0;
     font-size: 24px;
 }
+.controls-container {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+#mode-selector {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #4da3ff;
+    background-color: #1e293b;
+    color: #ffffff;
+    font-weight: bold;
+    outline: none;
+    cursor: pointer;
+}
 .assignment-btn {
     background-color: #4da3ff;
     color: #ffffff;
